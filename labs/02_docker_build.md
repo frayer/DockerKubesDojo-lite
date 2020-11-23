@@ -1,4 +1,4 @@
-# ~~ The Mission ~~
+# ~~ Building and running a Container Image ~~
 
 You and your team are on a mission to begin rearchitecting your monolithic application towards a micro-service based architecture.  While your team has some experience working with Containers, they've asked for your help in realizing the full potential of Cloud Native patterns when it comes to the design and operational concerns of your new architecture.  You did your homework on [12-factor apps](https://12factor.net/) and the feature set of [Kubernetes](https://kubernetes.io/docs/concepts/) and have given your team a set of requirements to produce a first cut of a microservice which will serve as the foundational codebase for all your microservices.
 
@@ -10,7 +10,9 @@ The features you've asked for in this foundational application include:
 * The application supports Infrastructure as Code principles to enable a Continuous Delivery pipeline.
 * The application must expose information about its health in order for Kubernetes to know it's running and can accept traffic.
 
-And the team has delivered.  They have created an [OCI compatible image](https://www.opencontainers.org/) and have already loaded it into the [Docker Trusted Registry](Change ME!).  They've given you the following information on how it behaves and the default URL endpoints it exposes.
+And the team has delivered.  They have created a starter Flask based Python application with the following features:
+
+> NOTE:  There are some things here you would not want to do in the real world like exposing environment variables or allowing someone to tweak a delay on a liveness probe (with a GET method of all things).  This is just a demo after all, and they are here to make it easier to tinker with.
 
 * It's a Python application with a dependency on a Redis instance.  The application is configurable through command line switches and the documentation for them can be found by running `python app.py --help`.
 * When running, it listens for HTTP connections on port `5000` by default.  This is configurable.
@@ -28,7 +30,7 @@ And the team has delivered.  They have created an [OCI compatible image](https:/
   * `/ready`
     * Similar to the `/live` endpoint, but this one goes the extra mile and makes sure the service has a healthy connection to the backing Redis service.  This is useful for [Kubernetes readiness probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/) which will not send network traffic to the service until it indicates its ready.
 
-You're ready to kick the tires on this service to get a feel for it, with an end goal of creating the Kubernetes manifests that can host the appliation.  The manifests, in YAML format, will live alongside this codebase and augment the foundational codebase with the foundational Configuration as Code to run it in any Kubernetes cluster.
+You're ready to kick the tires on this service to get a feel for it, with an end goal of creating the Kubernetes manifests that can host the appliation.  The manifests, in YAML format, will live alongside this codebase and augment the codebase with the foundational Configuration as Code to run it in any Kubernetes cluster.
 
 ---
 
@@ -40,17 +42,17 @@ Before you even think about running this in Kubernetes, you want to run a single
 
 You'll be working with this repository and configuration contanied within.  Clone it to a location of your choosing and open the directory in VS Code.
 
-> TIP: Run the following command from a directory containing no paths.  On Windows, a root directory of `C:\devl\ws` is a good convention.  In MacOS or Linux, this author uses a convention of `$HOME/code`.
+> TIP: Run the following command from a directory containing no spaces.  On Windows, a root directory of `C:\devl\ws` is a good convention.  In MacOS or Linux, this author uses a convention of `$HOME/workspace`.
 
 ```bash
-git clone https://github.com/javaplus/DockerKubesDojo.git
+git clone https://github.com/frayer/DockerKubesDojo-lite.git
 ```
 
 After cloning the repo locally, open a command prompt to the root of the project where the Dockerfile resides.
 
 Look at the Dockerfile:
 
-```
+```dockerfile
 FROM python:3
 
 WORKDIR /usr/src/app
@@ -65,25 +67,26 @@ COPY . .
 CMD [ "python", "./app.py" ]
 ```
 
-This docker file simply starts with a pre-existing image that has python installed and then copies the local source code and requirements to the image and states that the command to run when the container starts is "python ./app.py".  That is start the python app.
+This Dockerfile simply starts with a pre-existing image that has python installed and then copies the local source code and requirements to the image and states that the command to run when the container starts is "python ./app.py".  That final `python` command will start the Python application within the Container.
 
-These are the instructions that tell docker how to build this image.  We will now use this file to create a Docker image with our app.
+These are the instructions that tell docker how to build this image.  We will now use this file to create a Docker Image with our Python application bundled inside.
 
 Run the docker build command like this:
 
-```
-
+```bash
 docker build -t cloud-native-demo:1 .
-
 ```
-NOTE: There is a period at the end of that command and it is important!
 
-The -t tells Docker to tag this image with the name "cloud-native-demo" and create version "1".  The '.' at the very end tell docker where to find the Dockerfile.  In our case, this is the current directory, thus the '.'.
+> NOTE: There is a period at the end of that command and it is important!
 
-You should see something like this(NOTE: the output below is abbreviated):
+The -t tells Docker to tag this image with the name "cloud-native-demo" and create version "1".  The '.' at the very end tells Docker where to find the Dockerfile.  In our case, this is the current directory, thus the '.'.
 
-```
-D:\workspaces\DockerKubesDojo>docker build -t cloud-native-demo:1 .
+You should see something like this:
+
+> NOTE: the output below is abbreviated
+
+```bash
+> docker build -t cloud-native-demo:1 .
 Sending build context to Docker daemon  118.3kB
 Step 1/7 : FROM python:3
 3: Pulling from library/python
@@ -110,19 +113,19 @@ Removing intermediate container a4cdc2564677
  ---> ef5bc3de4d4f
 Successfully built ef5bc3de4d4f
 Successfully tagged cloud-native-demo:1
-SECURITY WARNING: You are building a Docker image from Windows against a non-Windows Docker host. All files and directories added to build context will have '-rwxr-xr-x' permissions. It is recommended to 
+SECURITY WARNING: You are building a Docker image from Windows against a non-Windows Docker host. All files and directories added to build context will have '-rwxr-xr-x' permissions. It is recommended to
 double check and reset permissions for sensitive files and directories.
 ```
+
 Now if you run a **docker images** command, you should see your newly created image:
+
 ```
-D:\workspaces\DockerKubesDojo>docker images
+> docker images
 REPOSITORY                           TAG                 IMAGE ID            CREATED             SIZE
 cloud-native-demo                    1                   ef5bc3de4d4f        17 minutes ago      943MB
 nginx                                latest              f7bb5701a33c        5 days ago          126MB
 python                               3                   038a832804a0        5 days ago          932MB
-
 ```
-
 
 ## Run the cloud-native-demo image and expose its port
 
@@ -142,30 +145,9 @@ docker run --rm -it -p 5000:5000 cloud-native-demo:1
 
 In your browser, navigate to the URL [http://localhost:5000](http://localhost:5000).  You should see a JSON response with some information about the running application.  If not, double check the `docker run ...` command you issued and look for any errors in the console output.
 
-If it's working, celebrate!  You successfully built and ran your own image!
+If it's working, celebrate!  You successfully built and executed your first custom Container!
 
 ## Stop the container
 
 In the window where you issued the `docker run ...` command, type `CTRL+C` to stop the container.
-Previously hitting `CTRL+C` in the command prompt wouldn't stop the container.  However, if you run the **docker ps** command now, you shouldn't see any containers running.  This is because when we issued the run command this time we added the `--rm` which stops the container automatically when you break.
-
-## Stretch Goal!!!!!!
-
-Want more practice creating your own Docker images???  In the previous stretch goal, we had you run an nginx container that mounted a local folder that allowed you to serve up your own custom HTML file.  We want to end up with the same result, but this time without a file mount.  Instead of using a file mount, create a Docker image that has your custom HTML file packaged in it.  
-
-**HINTS**
- - Create a Dockerfile that starts with the base of nginx (that is **FROM nginx**)
- - Use the COPY command to copy your custom HTML file into the image (The destination inside the image can be determined from the nginx "How to use ths image" section on [hub.docker.com](https://hub.docker.com/_/nginx) or by looking at your volume mount location from the previous Stretch Goal
- - If you don't specify a CMD, it should use the one from the base image... this is what you want in this case.
- - Ultimately, when finished buiding your image, you should be able to do a simple docker run with only the "-p 8080:80" option to publish your port and your custom image name.
-
-<details>
-  <summary>Click to expand More Hints/Spoilers</summary>
- 
- #### Dockerfile
-  - Should start with **FROM nginx**
-  - Should have a COPY command to COPY your HTML file to /usr/share/nginx/html
-  - Can build with **docker build -t mynginx:1 .**
- #### Running the container
-  - Run command should be **docker run -p 8080:80 mynginx:1** (assuming you tag it with mynginx:1)
-</details>
+Previously hitting `CTRL+C` in the command prompt wouldn't stop the container.  However, if you run the **docker ps** command now, you shouldn't see any containers running.  This is because when we issued the run command this time we added the `-it` which stops the container automatically when you break.

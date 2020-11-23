@@ -1,4 +1,4 @@
-# ~~ The World of Containers ~~
+# ~~ Introduction to Docker ~~
 
 ### Simple Docker Run
 
@@ -8,21 +8,20 @@ The typical usage of the **docker run** command is as follows:
 ```
 docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
 ```
-Notice the "**IMAGE**" refers to a pre-defined docker image that will be pulled down to run.
+Notice that "**IMAGE**" refers to a pre-defined docker image that will be pulled down to run.
 
-When we say pulled down, it means the docker image must be on your machine to run, if it doesn't exist locally, then it will be downloaded/pulled before it can be run as a container.
+When we say "pulled down", it means the docker image must be on your machine to run.  If it doesn't exist locally, then it will be downloaded/pulled before it can be executed as a container.
 
-Enough talking, let's run a container.  Issue this command:
+Issue this command:
 
-```
+```bash
 docker run hello-world:latest
-
 ```
-This will cause Docker to pull down the latest version of the hello-world image and then run it. 
+
+This will cause Docker to pull down the latest version of the hello-world image and then run it.
 You should see something like this:
 
-```
-C:\Users\tarltob1>docker run hello-world:latest
+```bash
 Unable to find image 'hello-world:latest' locally
 latest: Pulling from library/hello-world
 1b930d010525: Pull complete
@@ -72,17 +71,17 @@ We are going to use the **docker run** command again but use a different image (
 
 Run this command:
 
-```
+```bash
 docker run -p 8080:80 nginx
-
 ```
+
 This will start a container running NGINX.  NGINX listens on port 80 by default, so we are telling Docker to expose the internal port 80 to our local port 8080.  Notice the -p for publishing ports follows the syntax of <External Port>:<Internal Port>.
- 
- After running this command you should be able to open up a browser and go to http://localhost:8080 and see the nginx welcome screen.
- 
- ![NGINX Welcome](/labs/images/nginxWelcome.png)
- 
-After hitting this in the browser, you should a log in the command prompt where you ran the container that shows a request was recieved.
+
+After running this command you should be able to open up a browser and go to http://localhost:8080 and see the nginx welcome screen.
+
+![NGINX Welcome](/labs/images/nginxWelcome.png)
+
+After hitting this in the browser, you should see logs in the command prompt where you ran the container that shows a request was recieved.
 By default when you run a container with the docker run command, the standard out goes to your console.  To break out and get back to your command prompt you need to hit "CTRL + C" or similar break command.
 
 Do this now and break back to the command prompt.
@@ -91,8 +90,8 @@ NOTE: On windows, this usually does not kill the running container. On unix or m
 Run a [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) to see the currently running containers.
 
 You should see something like this:
-```
-D:\workspaces\DockerKubesDojo>docker ps
+
+```bash
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                  NAMES
 7e65845aa3ee        nginx               "nginx -g 'daemon of…"   4 minutes ago       Up 4 minutes        0.0.0.0:8080->80/tcp   recursing_khayyam
 
@@ -107,27 +106,3 @@ However, we will be more humane and issue a docker stop command.  NOTE that you 
 docker stop <YOUR CONTAINER ID>
 ```
 After this, re-run your **docker ps** command and notice that the container should no longer be running.
-
-
-### STRETCH GOAL 
-
-Your mission if you choose to accept it, is to run an nginx container that hosts your own created HTML file.
-You will accomplish this by using the docker run command as you did above to create an nginx container, but this time you will use a [volume mount](https://docs.docker.com/storage/volumes/) to mount a local **folder** that contains an HTML file into the running container.
-
-To know where to mount the file so that nginx will serve it up (and see an example), read the documenation for the nginx image.  You can find it by going to http://hub.docker.com and then searching for the nginx image.  Click on the Official nginx image and scroll to the bottom to find the "How to use this image" section.  The first example is of how to host simple static content.
-
-So, first create your own HTML file and save it to a preferably simple/short path on your hard drive (i.e. C:\dev\dojo\hello.html).
-
-Now you will need to run the nginx container with the '-v' option and replace the "/some/content" with the path to the **folder** containing your newly created HTML.  NOTE: the example from hub.docker.com doesn't add the -p (publish port) option, so if you use it as is, you won't be able to access your nginx container... so add the "-p 8080:80" option to it along with the new volume option.  
-
-NOTE: When you run the command the first time with a volume option, Docker will prompt you to ask you if you want to share the folder with Docker.  So, watch for a pop-up to ask you to share the folder.  Also, if you are on Windows, you are best to run this command from the basic command prompt or powershell. Using something like git bash can confuse things since it typically expect linux style paths.
-
-Also, be aware of the docker run syntax...
-```
-docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
-
-```
-
-
-
-

@@ -1,23 +1,23 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    run: cn-demo
-  name: cn-demo
+    run: cloud-native-demo
+  name: cloud-native-demo
 spec:
   replicas: 1
   selector:
     matchLabels:
-      run: cn-demo
+      run: cloud-native-demo
   template:
     metadata:
       labels:
-        run: cn-demo
+        run: cloud-native-demo
     spec:
       containers:
       - image: cloud-native-demo:1
         imagePullPolicy: IfNotPresent
-        name: cn-demo
+        name: cloud-native-demo
         resources:
           limits:
             cpu: 1

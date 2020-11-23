@@ -1,13 +1,6 @@
-# Docker and Kubernetes Dojo
-Tutorial on Using Docker and Kubernetes
+# Docker and Kubernetes Introduction
 
-**Big thanks to [Michael Frayer](https://github.com/frayer) for most of the content of this tutorial is from him!**
-
-## Presentation
-
-The presentation that accompanies this workshop is available here: [docker-and-kubernetes-dojo.pdf](https://github.com/javaplus/DockerKubesDojo/blob/master/slides/docker-and-kubernetes-dojo.pdf)
-
-This is provided to those that attended an in-person workshop who wish to reference back to topics discussed.  Much of the context is missing for those that did't attend, however it is not required material in order to proceed with the rest of the workshop below.
+This is a trimmed down version of the [javaplus/DockerKubesDojo](https://github.com/javaplus/DockerKubesDojo) repository to demonstrate some core concepts behind building and running Containers in both Docker and Kubernetes.  I highly recommend going through the full version to see more features of Kubernetes such as Deployment replicas, liveness and readiness probes.
 
 ## Pre-requisites:
 
@@ -16,7 +9,6 @@ Generally speaking you need to have the Git client and Docker along with Kuberne
 #### A console or shell environment
 
 Some basic skills working with command line tooling are required to complete this tutorial as you will interact with the CLI often throughout.  Windows Command prompt or Powershell is recommended for Window's users.  MacOS and Linux users can use their shell of choice.  It will be called out where there is a difference in CLI statements for Windows vs MacOS/Linux users.
-
 
 #### Git
 If you don't already have a Git Client, you can download the Git tools from here:
@@ -34,11 +26,6 @@ Here are links and instructions per operating system:
     - Docker Desktop Install Guide - https://docs.docker.com/docker-for-windows/install/
     - Enable Kubernetes
 
-- Older Windows Versions:
-  - Docker Toolbox:  https://docs.docker.com/toolbox/toolbox_install_windows/
-  - Kubernetes Support via Minikube(Click on the *Windows* tab under each section): https://kubernetes.io/docs/tasks/tools/install-minikube/
-  - Blog on working with Minikube on Windows: https://rominirani.com/tutorial-getting-started-with-kubernetes-on-your-windows-laptop-with-minikube-3269b54a226
-
 ##### Mac
   - Docker Desktop for Mac : https://hub.docker.com/editions/community/docker-ce-desktop-mac
 
@@ -49,8 +36,9 @@ Here are links and instructions per operating system:
 ### Testing your Installation
 
 Run the **docker version** command and you should see something like this:
-```
-C:\Users\tarltob1>docker version
+
+```bash
+> docker version
 Client: Docker Engine - Community
  Version:           19.03.5
  API version:       1.40
@@ -83,10 +71,11 @@ Server: Docker Engine - Community
   StackAPI:         v1beta2
 ```
 
-Test kubernetes by running the **kubectl get nodes** command.
+Test Kubernetes by running the **kubectl get nodes** command.
 This should show you one worker node running on your machine:
-```
-C:\Users\tarltob1>kubectl get nodes
+
+```bash
+> kubectl get nodes
 NAME             STATUS   ROLES    AGE   VERSION
 docker-desktop   Ready    master   45d   v1.14.8
 
@@ -95,12 +84,12 @@ If these both work, you should be ready to go.
 
 
 #### Optional Pre-reqs (all OS's)
+
 ##### Install Visual Studio Code
 
 You will be editing YAML files and viewing Python code during the course of this exercise.  You can use any text editor, but Visual Studio Code is recommended.
 
 [Download and install VS Code](https://code.visualstudio.com/)
-
 
 ##### Install the JSON Formatter Chrome Extension
 
@@ -112,31 +101,11 @@ This is a useful, but not required, Chrome extension for viewing JSON output in 
 
 # ~~ Labs ~~
 
-1. [Intro to Docker and Containers](labs/docker_intro.md)
-
-1. [Docker with Cloud Native App](labs/docker_cloud_app.md)
-
-1. [Kubernetes Intro](labs/kube_deploy_cloud_app.md)
-
-1. [Kubernetes Infrastructure as Code](labs/kube_infra_as_code.md)
-
-1. [Docker for Tooling](labs/docker_tools_container.md)
-
-1. [Kubernetes Environment Variables](labs/kube_env_vars.md)
-
-1. [Kubernetes Override Starting Command](labs/kube_override_cmd.md)
-
-1. [Kubernetes Ingress](labs/kube_setup_ingress.md)
-
-1. [Kubernetes Readiness](labs/kube_readiness.md)
-
-1. [Kubernetes Readiness Part 2](labs/kube_readiness_2.md)
-
+1. [Introduction to Docker](labs/01_docker_intro.md)
+1. [Building and running a Container Image](labs/02_docker_build.md)
+1. [Introduction to Kubernetes](labs/03_kubernetes_intro.md)
 
 ---
-
-
-
 
 # ~~ Conclusion ~~
 
