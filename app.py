@@ -68,18 +68,18 @@ def ready():
     try:
         redis_ready = redis_client.ping()
     except:
-        logging.warning("python connection down")
+        logging.warning("redis connection down")
 
     response = Response(mimetype="application/json")
 
     if redis_ready:
         response.status = "200"
-        response.response = json.dumps({
+        response.data = json.dumps({
             "redis_connection": "up"
         })
     else:
         response.status = "503"
-        response.response = json.dumps({
+        response.data = json.dumps({
             "redis_connection": "down"
         })
 
