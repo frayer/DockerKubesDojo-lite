@@ -1,9 +1,12 @@
-from arguments import args
-from flask import Flask, Response, request, json
+"""Flask application entrypoint"""
+
 import logging
 import os
-import redis
 import time
+from flask import Flask, Response, json
+import redis
+
+from lib import args, LivenessDelay
 
 app = Flask(__name__)
 
@@ -12,11 +15,16 @@ LISTEN_PORT = args.port
 REDIS_HOST = args.redis_host
 REDIS_PORT = args.redis_port
 
-redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
-livenessDelay = 0
+REDIS_CLIENT = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
+LIVENESS_DELAY = LivenessDelay(delay=0)
 
 @app.route('/')
 def root():
+    """
+    Return application cofiguration details.
+    This information is useful for this demo application, but it is a terrible
+    idea to return data like this in any real application.
+    """
     data = json.dumps({
         "appName": "cloud-native-demo",
         "version": "1.0.0",
@@ -30,45 +38,82 @@ def root():
     })
     return Response(data, mimetype="application/json")
 
+
 @app.route('/counter')
 def counter():
+    """
+    Returns the value of an incrementing counter for the host where this
+    application is running
+    """
     hostname = os.getenv("HOSTNAME")
 
     try:
-        if redis_client.hexists("hosts", hostname):
-            redis_client.hincrby("hosts", hostname, amount=1)
+        if REDIS_CLIENT.hexists("hosts", hostname):
+            REDIS_CLIENT.hincrby("hosts", hostname, amount=1)
         else:
-            redis_client.hset("hosts", hostname, 1)
+            REDIS_CLIENT.hset("hosts", hostname, 1)
 
-        return Response(json.dumps(redis_client.hgetall("hosts")), status=200, mimetype="application/json")
-    except:
-        return Response(json.dumps({"error": "service unavailable"}), status=503, mimetype="application/json")
+        return Response(
+            json.dumps(REDIS_CLIENT.hgetall("hosts")),
+            status=200,
+            mimetype="application/json")
+    except redis.exceptions.RedisError:
+        return Response(
+            json.dumps({"error": "service unavailable"}),
+            status=503,
+            mimetype="application/json")
+
 
 @app.route('/counter/reset')
 def clear_counter():
-    hosts = redis_client.hgetall("hosts")
-    [redis_client.hdel("hosts", key) for key in hosts.keys()]
-    return Response(json.dumps(redis_client.hgetall("hosts")), status=200, mimetype="application/json")
+    """Clears all counters for all hosts"""
+    hosts = REDIS_CLIENT.hgetall("hosts")
+    for key in hosts.keys():
+        REDIS_CLIENT.hdel("hosts", key)
+    return Response(
+        json.dumps(REDIS_CLIENT.hgetall("hosts")),
+        status=200,
+        mimetype="application/json")
 
-@app.route('/live')
+
+@app.route('/live', methods=['GET'])
 def live_get():
-    time.sleep(livenessDelay)
-    return Response(json.dumps({"delay": livenessDelay}), status=200, mimetype="application/json")
+    """Liveness endpoint to determine whether the application is running"""
+    time.sleep(LIVENESS_DELAY.delay)
+    return Response(
+        json.dumps({"delay": LIVENESS_DELAY.delay}),
+        status=200,
+        mimetype="application/json")
 
-@app.route('/live/<int:delay>')
+
+@app.route('/live/<int:delay>', methods=['GET'])
 def live_post(delay):
-    global livenessDelay
-    livenessDelay = delay
-    return Response(json.dumps({"delay": livenessDelay}), status=200, mimetype="application/json")
+    """
+    Update the simulated delay on the liveness endpoint.
+    DEMO NOTE: This would normally be a PUT operation when following REST verb
+    semantics.  For the purposes of the demo it will remain a GET to allow easy
+    `curl` commands from the CLI.
+    e.g. `curl localhost:5000/live/5`
+    """
+    LIVENESS_DELAY.delay = delay
+    return Response(
+        json.dumps({"delay": LIVENESS_DELAY.delay}),
+        status=200,
+        mimetype="application/json")
+
 
 @app.route('/ready')
 def ready():
+    """
+    Readiness endpoint which will fail if the application is unable to connect
+    to its backing Redis dependency.
+    """
     redis_ready = False
 
     try:
-        redis_ready = redis_client.ping()
-    except:
-        logging.warning("redis connection down")
+        redis_ready = REDIS_CLIENT.ping()
+    except redis.exceptions.RedisError as error:
+        logging.warning(error)
 
     response = Response(mimetype="application/json")
 
@@ -84,6 +129,7 @@ def ready():
         })
 
     return response
+
 
 if __name__ == '__main__':
     app.run(host=LISTEN_HOST, port=LISTEN_PORT)
