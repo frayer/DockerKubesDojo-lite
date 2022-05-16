@@ -122,7 +122,7 @@ def ready():
         response.data = json.dumps({
             "reason": "forced readiness failure"
         })
-    if redis_ready:
+    elif redis_ready:
         response.status = "200"
         response.data = json.dumps({
             "redis_connection": "up"
