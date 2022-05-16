@@ -140,6 +140,10 @@ def ready():
 def ready_fail():
     """Allows the readiness check to fail regardless of any other condition"""
     HEALTH_PROBES.readiness_pass = False
+    return Response(
+        json.dumps({"readiness_pass": HEALTH_PROBES.readiness_pass}),
+        status=200,
+        mimetype="application/json")
 
 
 if __name__ == '__main__':
