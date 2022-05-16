@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: redis-test
+  name: redis-test
+spec:
+  type: ClusterIP
+  selector:
+    run: redis-test
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
