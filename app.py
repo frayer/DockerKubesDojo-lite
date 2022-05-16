@@ -6,7 +6,7 @@ import time
 from flask import Flask, Response, json
 import redis
 
-from lib import args, LivenessDelay
+from lib import args, HealthProbes
 
 app = Flask(__name__)
 
@@ -16,7 +16,7 @@ REDIS_HOST = args.redis_host
 REDIS_PORT = args.redis_port
 
 REDIS_CLIENT = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
-LIVENESS_DELAY = LivenessDelay(delay=0)
+HEALTH_PROBES = HealthProbes(liveness_delay=0, readiness_pass=True)
 
 @app.route('/')
 def root():
@@ -79,9 +79,9 @@ def clear_counter():
 @app.route('/live', methods=['GET'])
 def live_get():
     """Liveness endpoint to determine whether the application is running"""
-    time.sleep(LIVENESS_DELAY.delay)
+    time.sleep(HEALTH_PROBES.liveness_delay)
     return Response(
-        json.dumps({"delay": LIVENESS_DELAY.delay}),
+        json.dumps({"delay": HEALTH_PROBES.liveness_delay}),
         status=200,
         mimetype="application/json")
 
@@ -95,9 +95,9 @@ def live_post(delay):
     `curl` commands from the CLI.
     e.g. `curl localhost:5000/live/5`
     """
-    LIVENESS_DELAY.delay = delay
+    HEALTH_PROBES.liveness_delay = delay
     return Response(
-        json.dumps({"delay": LIVENESS_DELAY.delay}),
+        json.dumps({"delay": HEALTH_PROBES.liveness_delay}),
         status=200,
         mimetype="application/json")
 
@@ -117,6 +117,11 @@ def ready():
 
     response = Response(mimetype="application/json")
 
+    if not HEALTH_PROBES.readiness_pass:
+        response.status = "503"
+        response.data = json.dumps({
+            "reason": "forced readiness failure"
+        })
     if redis_ready:
         response.status = "200"
         response.data = json.dumps({
@@ -129,6 +134,12 @@ def ready():
         })
 
     return response
+
+
+@app.route('/ready/fail')
+def ready_fail():
+    """Allows the readiness check to fail regardless of any other condition"""
+    HEALTH_PROBES.readiness_pass = False
 
 
 if __name__ == '__main__':
